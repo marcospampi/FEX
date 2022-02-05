@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.14)
 project(FEX)
 
-option(BUILD_TESTS "Build unit tests to ensure sanity" TRUE)
+option(BUILD_TESTS "Build unit tests to ensure sanity" FALSE)
 option(BUILD_THUNKS "Build thunks" FALSE)
 option(ENABLE_CLANG_FORMAT "Run clang format over the source" FALSE)
 option(ENABLE_IWYU "Enables include what you use program" FALSE)
-option(ENABLE_LTO "Enable LTO with compilation" TRUE)
+option(ENABLE_LTO "Enable LTO with compilation" FALSE)
 option(ENABLE_XRAY "Enable building with LLVM X-Ray" FALSE)
 option(ENABLE_LLD "Enable linking with LLD" FALSE)
 option(ENABLE_ASAN "Enables Clang ASAN" FALSE)
@@ -16,10 +16,11 @@ option(ENABLE_STRICT_WERROR "Enables stricter -Werror for CI" FALSE)
 option(ENABLE_WERROR "Enables -Werror" FALSE)
 option(ENABLE_STATIC_PIE "Enables static-pie build" FALSE)
 option(ENABLE_JEMALLOC "Enables jemalloc allocator" TRUE)
-option(ENABLE_OFFLINE_TELEMETRY "Enables FEX offline telemetry" TRUE)
+option(ENABLE_OFFLINE_TELEMETRY "Enables FEX offline telemetry" FALSE)
 option(ENABLE_COMPILE_TIME_TRACE "Enables time trace compile option" FALSE)
 option(ENABLE_LIBCXX "Enables LLVM libc++" FALSE)
 option(ENABLE_INTERPRETER "Enables FEX's Interpreter" FALSE)
+option(ENABLE_JUST_CORE "Builds just the core" TRUE)
 
 set (X86_C_COMPILER "x86_64-linux-gnu-gcc" CACHE STRING "c compiler for compiling x86 guest libs")
 set (X86_CXX_COMPILER "x86_64-linux-gnu-g++" CACHE STRING "c++ compiler for compiling x86 guest libs")
@@ -268,10 +269,10 @@ set (CMAKE_LINKER_FLAGS_RELEASE "${CMAKE_LINKER_FLAGS_RELEASE} -fomit-frame-poin
 add_subdirectory(External/vixl/)
 include_directories(External/vixl/src/)
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  # This means we were attempted to get compiled with GCC
-  message(FATAL_ERROR "FEX doesn't support getting compiled with GCC!")
-endif()
+#if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+#  # This means we were attempted to get compiled with GCC
+#  message(FATAL_ERROR "FEX doesn't support getting compiled with GCC!")
+#endif()
 
 find_package(PkgConfig REQUIRED)
 find_package(Python 3.0 REQUIRED COMPONENTS Interpreter)
@@ -461,7 +462,7 @@ add_subdirectory(FEXHeaderUtils/)
 include_directories(FEXHeaderUtils/)
 
 add_subdirectory(External/FEXCore)
-
+if (NOT ENABLE_JUST_CORE)
 # Binfmt_misc files must be installed prior to Source/ installs
 add_subdirectory(Data/binfmts/)
 
@@ -604,3 +605,5 @@ if (CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
   set (CPACK_DEBIAN_PACKAGE_CONFLICTS "${CPACK_DEBIAN_PACKAGE_CONFLICTS}, qemu-user-static")
 endif()
 include (CPack)
+
+endif()
