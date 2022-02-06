@@ -20,7 +20,7 @@ option(ENABLE_OFFLINE_TELEMETRY "Enables FEX offline telemetry" FALSE)
 option(ENABLE_COMPILE_TIME_TRACE "Enables time trace compile option" FALSE)
 option(ENABLE_LIBCXX "Enables LLVM libc++" FALSE)
 option(ENABLE_INTERPRETER "Enables FEX's Interpreter" FALSE)
-option(ENABLE_JUST_CORE "Builds just the core" TRUE)
+option(ENABLE_JUST_CORE "Builds just the core" FALSE)
 
 set (X86_C_COMPILER "x86_64-linux-gnu-gcc" CACHE STRING "c compiler for compiling x86 guest libs")
 set (X86_CXX_COMPILER "x86_64-linux-gnu-g++" CACHE STRING "c++ compiler for compiling x86 guest libs")

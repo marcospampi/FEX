@@ -1132,4 +1132,99 @@ namespace FEXCore::Context {
     Thread->FrontendDecoder->SetExternalBranches(ExternalBranches);
     Thread->FrontendDecoder->SetSectionMaxAddress(SectionMaxAddress);
   }
+  /// TODO: MARCOSPAMPI
+  uintptr_t Context::HookAndCompileCompileBlock (FEXCore::Core::CpuStateFrame *Frame, uint64_t GuestRIP, HookAndCompileHandler handler) {
+    auto Thread = Frame->Thread;
+
+    // Is the code in the cache?
+    // The backends only check L1 and L2, not L3
+    if (auto HostCode = Thread->LookupCache->FindBlock(GuestRIP)) {
+      return HostCode;
+    }
+
+    void *CodePtr {};
+    FEXCore::IR::IRListView *IRList {};
+    FEXCore::Core::DebugData *DebugData {};
+    FEXCore::IR::RegisterAllocationData *RAData {};
+
+    bool DecrementRefCount = false;
+    bool GeneratedIR {};
+    uint64_t StartAddr {}, Length {};
+
+    if (Thread->CompileBlockReentrantRefCount != 0) {
+      if (!Thread->CompileService) {
+        Thread->CompileService = std::make_shared<FEXCore::CompileService>(this, Thread);
+        Thread->CompileService->Initialize();
+      }
+
+      auto* WorkItem = Thread->CompileService->CompileCode(GuestRIP);
+      WorkItem->ServiceWorkDone.Wait();
+      // Return here with the data in place
+      CodePtr = WorkItem->CodePtr;
+      IRList = WorkItem->IRList;
+      DebugData = WorkItem->DebugData;
+      RAData = WorkItem->RAData;
+      StartAddr = WorkItem->StartAddr;
+      Length = WorkItem->Length;
+      WorkItem->SafeToClear = true;
+
+      // The compile service will always generate IR + DebugData + RAData
+      // Remove the entries here to make sure we don't fail to insert later on
+      RemoveCodeEntry(Thread, GuestRIP);
+      GeneratedIR = true;
+    } else {
+      ++Thread->CompileBlockReentrantRefCount;
+      DecrementRefCount = true;
+      auto [Code, IR, Data, RA, Generated, _StartAddr, _Length] = CompileCode(Thread, GuestRIP);
+      CodePtr = Code;
+      IRList = IR;
+      DebugData = Data;
+      RAData = RA;
+      GeneratedIR = Generated;
+      StartAddr = _StartAddr;
+      Length = _Length;
+    }
+
+    if (CodePtr == nullptr) {
+      if (DecrementRefCount)
+        --Thread->CompileBlockReentrantRefCount;
+      return 0;
+    }
+
+    // The core managed to compile the code.
+    if (Config.BlockJITNaming()) {
+      if (DebugData) {
+        if (DebugData->Subblocks.size()) {
+          for (auto& Subblock: DebugData->Subblocks) {
+            Symbols.Register((void*)Subblock.HostCodeStart, GuestRIP, Subblock.HostCodeSize);
+          }
+        } else {
+          Symbols.Register(CodePtr, GuestRIP, DebugData->HostCodeSize);
+        }
+      }
+    }
+
+    if (IRCaptureCache.PostCompileCode(
+        Thread,
+        CodePtr,
+        GuestRIP,
+        StartAddr,
+        Length,
+        RAData,
+        IRList,
+        DebugData,
+        GeneratedIR,
+        DecrementRefCount)) {
+      // Early exit
+      return (uintptr_t)CodePtr;
+    }
+
+    if (DecrementRefCount)
+      --Thread->CompileBlockReentrantRefCount;
+
+    // Insert to lookup cache
+    AddBlockMapping(Thread, GuestRIP, CodePtr, StartAddr, Length);
+
+    return (uintptr_t)CodePtr;
+  }
 }

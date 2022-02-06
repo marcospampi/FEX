@@ -192,6 +192,7 @@ namespace FEXCore::Context {
     };
     [[nodiscard]] CompileCodeResult CompileCode(FEXCore::Core::InternalThreadState *Thread, uint64_t GuestRIP);
     uintptr_t CompileBlock(FEXCore::Core::CpuStateFrame *Frame, uint64_t GuestRIP);
+    uintptr_t HookAndCompileCompileBlock(FEXCore::Core::CpuStateFrame *Frame, uint64_t GuestRIP, HookAndCompileHandler handler) {
 
     // same as CompileBlock, but aborts on failure
     void CompileBlockJit(FEXCore::Core::CpuStateFrame *Frame, uint64_t GuestRIP);

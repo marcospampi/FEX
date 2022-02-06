@@ -221,6 +221,10 @@ namespace Debug {
   // void SetIRForRIP(FEXCore::Context::Context *CTX, uint64_t RIP, FEXCore::IR::IntrusiveIRList *const ir) {
   //   CTX->SetIRForRIP(RIP, ir);
   // }
+
+  void HookAndCompile(FEXCore::Core::InternalThreadState *Thread, uint64_t GuestRIP, HookAndCompileHandler handler) {
+    Thread->CTX->HookAndCompileBlock(Thread->CurrentFrame, GuestRIP, handler);
+  }
 }
 
 }

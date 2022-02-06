@@ -6,7 +6,7 @@
 #include <FEXCore/Core/SignalDelegator.h>
 #include <FEXCore/Core/CPUID.h>
 #include <FEXCore/Utils/CompilerDefs.h>
-
+#include <FEXCore/IR/IREmitter.h>
 #include <istream>
 #include <ostream>
 #include <memory>
@@ -247,4 +247,9 @@ namespace FEXCore::Context {
   FEX_DEFAULT_VISIBILITY void FlushCodeRange(FEXCore::Core::InternalThreadState *Thread, uint64_t Start, uint64_t Length);
 
   FEX_DEFAULT_VISIBILITY void ConfigureAOTGen(FEXCore::Core::InternalThreadState *Thread, std::set<uint64_t> *ExternalBranches, uint64_t SectionMaxAddress);
+
+  // marcospampi
+  using HookAndCompileHandler = std::function<void(uint64_t address, FEXCore::IR::IREmitter &emitter)>;
+  FEX_DEFAULT_VISIBILITY void HookAndCompile(FEXCore::Core::InternalThreadState *Thread, uint64_t GuestRIP, HookAndCompileHandler handler);
+
 }
