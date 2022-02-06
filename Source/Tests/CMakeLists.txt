@@ -176,3 +176,20 @@ target_link_libraries(IRLoader
     fmt::fmt
 )
 
+add_executable(XBELoader
+  Xbox.cpp
+  Xbox/xbe.cpp
+  Xbox/xbe_loader.cpp
+)
+target_include_directories(XBELoader
+  PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/Source/
+    ${CMAKE_BINARY_DIR}/generated
+)
+target_link_libraries(XBELoader
+  PRIVATE
+    ${LIBS}
+    LinuxEmulation
+    ${STATIC_PIE_OPTIONS}
+    ${PTHREAD_LIB}
+)

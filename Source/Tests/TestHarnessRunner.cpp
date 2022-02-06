@@ -134,6 +134,10 @@ int main(int argc, char **argv, char **const envp) {
       DidFault = true;
     return false;
   }, true);
+  SignalDelegation->RegisterFrontendHostSignalHandler(SIGBUS, [&DidFault](FEXCore::Core::InternalThreadState *Thread, int Signal, void *info, void *ucontext) {
+      DidFault = true;
+    return false;
+  }, true);
 
   FEXCore::Context::SetSignalDelegator(CTX, SignalDelegation.get());
   FEXCore::Context::SetSyscallHandler(CTX, SyscallHandler.get());
